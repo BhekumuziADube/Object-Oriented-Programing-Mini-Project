@@ -77,3 +77,40 @@ class ValidityConsistencyChecks:
             "rows_checked": len(self._df),
             "issues": issues,
         }
+
+    def check_validity(self) -> dict:
+        """Check types, allowed ranges and the Outcome values."""
+        issues = []
+
+        for column, (low, high) in VALID_RANGES.items():
+            if column not in self._df.columns:
+                issues.append(self._missing_column_issue(column))
+                continue
+
+            values = pd.to_numeric(self._df[column], errors="coerce")
+
+            not_a_number = values.isna() & self._df[column].notna()
+            if not_a_number.any():
+                issues.append(
+                    self._issue(column, "value is not a number", not_a_number)
+                )
+
+            checked = values.notna()
+            if column in HIDDEN_ZERO_COLUMNS:
+                checked &= values != 0  # zeros belong to the completeness check
+
+            outside = checked & ((values < low) | (values > high))
+            if outside.any():
+                issues.append(
+                    self._issue(column, f"value outside {low} to {high}", outside)
+                )
+
+        if "Outcome" not in self._df.columns:
+            issues.append(self._missing_column_issue("Outcome"))
+        else:
+            outcome = pd.to_numeric(self._df["Outcome"], errors="coerce")
+            bad_outcome = ~outcome.isin([0, 1])
+            if bad_outcome.any():
+                issues.append(self._issue("Outcome", "must be 0 or 1", bad_outcome))
+
+        return self._result("Validity", issues)
