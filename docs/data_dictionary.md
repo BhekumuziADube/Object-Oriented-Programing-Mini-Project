@@ -19,3 +19,37 @@ File: `data/diabetes.csv`. 768 rows, 9 columns, no missing (empty) cells and no 
 Outcome counts: 500 negative (0) and 268 positive (1), so 34.9% positive.
 
 The valid ranges are the hard limits used by the validity check (card C2). They are proposed values the team can adjust, but only before Monday.
+
+
+## Hidden zeros (missing values written as 0)
+
+In five columns a value of 0 is not a real measurement, so it means "missing". The file has no empty cells, which is why this problem is hidden.
+
+| Column | Rows with 0 | Share of 768 rows |
+| --- | --- | --- |
+| Glucose | 5 | 0.7% |
+| BloodPressure | 35 | 4.6% |
+| SkinThickness | 227 | 29.6% |
+| Insulin | 374 | 48.7% |
+| BMI | 11 | 1.4% |
+
+Pregnancies has 111 rows with 0. These are valid, because a patient can have had no pregnancies. Do not treat them as missing.
+
+Rule used by the project: in Glucose, BloodPressure, SkinThickness, Insulin and BMI, a value of 0 is converted to missing (NaN) before imputation.
+
+## Consistency rule
+
+Pregnancies must be at most Age minus 10. All 768 rows currently follow this rule.
+
+## Source, period and population
+
+- Origin: US National Institute of Diabetes and Digestive and Kidney Diseases, shared through the UCI Machine Learning Repository and Kaggle. Copy the exact citation from the page you downloaded the file from: https://www.kaggle.com/datasets/mragpavank/diabetes
+- Population: women of Pima Indian heritage, aged 21 or older, as described in the source documentation.
+- Period: collected in the late 1980s. The file has no date column, so this comes from the source documentation, not from the data itself.
+
+## Known limitations
+
+- Results may not apply to other populations, countries or years.
+- Diagnostic practice has changed since the data was collected.
+- Original patient records cannot be checked, so accuracy checks can only test whether values are plausible.
+- One BloodPressure value (24 mm Hg) is unusually low. It is inside the hard limits but will be flagged by the accuracy check.
