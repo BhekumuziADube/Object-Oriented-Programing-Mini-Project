@@ -26,3 +26,21 @@ Call `run_all()` once and report Validity and Consistency separately.
 Show the pass status, rows checked, and the number of rows affected
 by each rule. The same row can fail multiple rules, so adding the
 per-rule counts can double-count rows.
+
+## C4 – Imputer Base Class
+
+Module: `src/imputers.py`  
+Status: Proposed in PR #41. Confirm against the version merged into `develop`.
+
+`Imputer` is an abstract base class. Each imputation strategy implements
+the same two methods so it can be swapped into the same pipeline.
+
+| Method | Behaviour |
+| --- | --- |
+| `fit(self, X, y=None) -> Imputer` | Learns from the training data and returns `self`. |
+| `transform(self, X)` | Uses the fitted imputer to fill missing values and returns a copy of `X`. |
+
+`fit_transform()` is inherited from `TransformerMixin`. During
+cross-validation, fit the imputer on the training fold, then use
+`transform()` on the validation fold. This keeps validation data
+out of the fitting step.
