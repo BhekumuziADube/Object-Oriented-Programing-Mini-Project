@@ -59,3 +59,45 @@ class DataQualityChecker:
             "percent": percent,
             "note": note,
         }
+
+    def check_completeness(self) -> List[Finding]:
+        """Find blank cells and hidden missing values (impossible zeros)."""
+        total = len(self._df)
+        findings: List[Finding] = []
+
+        # 1) blank cells (NaN) in every column
+        for col in self._df.columns:
+            blanks = int(self._df[col].isna().sum())
+            findings.append(
+                self._finding("Completeness", "Blank (NaN) cells", col, blanks, total)
+            )
+
+        # 2) zeros that really mean "not recorded"
+        present = [c for c in self.HIDDEN_ZERO_COLUMNS if c in self._df.columns]
+        for col in present:
+            zeros = int((self._df[col] == 0).sum())
+            findings.append(
+                self._finding(
+                    "Completeness",
+                    "Zero recorded where zero is impossible",
+                    col,
+                    zeros,
+                    total,
+                    "Hidden missing value",
+                )
+            )
+
+        # 3) how many patients are affected by at least one hidden zero
+        if present:
+            rows_hit = int((self._df[present] == 0).any(axis=1).sum())
+            findings.append(
+                self._finding(
+                    "Completeness",
+                    "Rows with at least one hidden zero",
+                    "(any of: " + ", ".join(present) + ")",
+                    rows_hit,
+                    total,
+                    "Dropping these rows would lose a large share of the data",
+                )
+            )
+        return findings
