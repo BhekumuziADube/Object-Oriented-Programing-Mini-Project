@@ -101,3 +101,28 @@ class DataQualityChecker:
                 )
             )
         return findings
+
+    def check_uniqueness(self) -> List[Finding]:
+        """Find duplicate records."""
+        total = len(self._df)
+        # an ID column would make every row unique, so ignore it here
+        data = self._df.drop(columns=["PatientID"], errors="ignore")
+
+        full_dups = int(data.duplicated().sum())
+        feature_dups = int(
+            data.drop(columns=[self.TARGET], errors="ignore").duplicated().sum()
+        )
+        return [
+            self._finding(
+                "Uniqueness", "Fully duplicated rows", "(all columns)", full_dups, total
+            ),
+            self._finding(
+                "Uniqueness",
+                "Duplicate rows ignoring Outcome",
+                "(feature columns)",
+                feature_dups,
+                total,
+                "The file has no patient ID, so uniqueness of patients "
+                "cannot be proven from the data alone",
+            ),
+        ]
