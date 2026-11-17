@@ -44,3 +44,19 @@ the same two methods so it can be swapped into the same pipeline.
 cross-validation, fit the imputer on the training fold, then use
 `transform()` on the validation fold. This keeps validation data
 out of the fitting step.
+
+## E1 – Evaluator
+
+Status: Proposed for team review.
+
+`Evaluator.evaluate(y_true, y_pred, y_score)` summarises the
+performance of a binary classifier.
+
+- `y_true` contains the observed outcome labels.
+- `y_pred` contains the predicted class labels.
+- `y_score` contains the model scores for the positive class.
+
+The method returns accuracy, precision, recall, F1, ROC-AUC, and
+a confusion matrix. Accuracy, precision, recall, F1, and the
+confusion matrix use predicted labels. ROC-AUC uses the model
+scores so it can assess performance across decision thresholds.
