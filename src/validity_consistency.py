@@ -77,3 +77,53 @@ class ValidityConsistencyChecks:
             "rows_checked": len(self._df),
             "issues": issues,
         }
+
+    def check_consistency(self) -> dict:
+        """Check data types, whole numbers and the Pregnancies and Age rule."""
+        issues = []
+        all_rows = pd.Series(True, index=self._df.index)
+
+        for column in ALL_COLUMNS:
+            if column not in self._df.columns:
+                issues.append(self._missing_column_issue(column))
+            elif not pd.api.types.is_numeric_dtype(self._df[column]):
+                issues.append(self._issue(column, "column is not numeric", all_rows))
+
+        for column in WHOLE_NUMBER_COLUMNS:
+            if column not in self._df.columns:
+                continue
+            values = pd.to_numeric(self._df[column], errors="coerce")
+            fractional = values.notna() & (values % 1 != 0)
+            if fractional.any():
+                issues.append(
+                    self._issue(column, "must be a whole number", fractional)
+                )
+
+        if {"Pregnancies", "Age"} <= set(self._df.columns):
+            pregnancies = pd.to_numeric(self._df["Pregnancies"], errors="coerce")
+            age = pd.to_numeric(self._df["Age"], errors="coerce")
+            too_many = pregnancies > (age - 10)
+            if too_many.any():
+                issues.append(
+                    self._issue(
+                        "Pregnancies, Age",
+                        "Pregnancies must be at most Age - 10",
+                        too_many,
+                    )
+                )
+
+        return self._result("Consistency", issues)
+
+    def run_all(self) -> dict:
+        """Run both checks and return the results keyed by dimension."""
+        return {
+            "Validity": self.check_validity(),
+            "Consistency": self.check_consistency(),
+        }
+
+
+if __name__ == "__main__":
+    # Quick manual check: python src/validity_consistency.py
+    data = pd.read_csv("data/diabetes.csv")
+    for name, result in ValidityConsistencyChecks(data).run_all().items():
+        print(name, "passed:", result["passed"], "issues:", len(result["issues"]))
