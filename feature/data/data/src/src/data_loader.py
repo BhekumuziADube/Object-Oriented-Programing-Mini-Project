@@ -59,3 +59,20 @@ class DataLoader:
 
         if not set(df[self.TARGET_COLUMN].unique()).issubset({0, 1}):
             raise ValueError("Outcome column must contain only 0 and 1.")
+def summary(self) -> dict:
+        """Return basic facts about the loaded data (rows, columns, balance)."""
+        if self._data is None:
+            raise RuntimeError("Call load() before summary().")
+
+        return {
+            "rows": len(self._data),
+            "columns": list(self._data.columns),
+            "positive_rate": float(self._data[self.TARGET_COLUMN].mean()),
+        }
+
+
+if _name_ == "_main_":
+    # Quick manual check: python src/data_loader.py
+    loader = DataLoader("data/diabetes.csv")
+    loader.load()
+    print(loader.summary())
