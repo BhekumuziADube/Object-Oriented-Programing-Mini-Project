@@ -45,32 +45,63 @@ cross-validation, fit the imputer on the training fold, then use
 `transform()` on the validation fold. This keeps validation data
 out of the fitting step.
 
-## E1 – Evaluator
+## DataLoader (I1)
 
-Status: Proposed for team review.
+- `load()` loads the dataset.
+- `summary()` provides a dataset summary.
 
-`Evaluator.evaluate(y_true, y_pred, y_score)` summarises the
-performance of a binary classifier.
+## CleaningLog
 
-- `y_true` contains the observed outcome labels.
-- `y_pred` contains the predicted class labels.
-- `y_score` contains the model scores for the positive class.
+- `add(step, dimension, column, issue, action, rows_affected, justification)`
+  records a cleaning decision and its justification.
+- `to_frame()` returns the log as a table.
+- The log is saved to `docs/cleaning_log.csv`.
 
-The method returns accuracy, precision, recall, F1, ROC-AUC, and
-a confusion matrix. Accuracy, precision, recall, F1, and the
-confusion matrix use predicted labels. ROC-AUC uses the model
-scores so it can assess performance across decision thresholds.
+## Preprocessor (C6)
 
-## M1–M3 – Prediction Models
+Split the data first. Within each split, apply these steps in order:
 
-Status: Proposed for team review. Confirm these signatures with the M1 owner.
+1. `ZeroToNaN` converts zero placeholders in the designated measurement
+   columns to missing values.
+2. `StandardScaler` scales the features.
+3. An `Imputer` applies the selected missing-value strategy.
+4. The model fits on the processed training features.
 
-The model classes share the `BaseModel` interface so the evaluation
-runner can use the same workflow for logistic regression, random
-forest, and KNN classification.
+The preprocessing pipeline contains `ZeroToNaN`, `StandardScaler`,
+and the imputer, in that order. Fit the pipeline on training data
+and use the fitted pipeline to transform the held-out data.
+`ZerosKeptImputer` is the no-op strategy described in the plan.
 
-| Proposed method | Behaviour |
-| --- | --- |
-| `fit(X, y)` | Train the model using the training features and outcome labels. Return the fitted model instance. |
-| `predict(X)` | Return one predicted class label per row for `Evaluator`'s `y_pred` input. |
+## Data split (W1, proposed)
+
+`split_data(df, test_size=0.2, random_state=42)` returns
+`X_train`, `X_test`, `y_train`, and `y_test`, in that order.
+The split is stratified on `Outcome`.
+
+## Prediction models (M1–M3)
+
+`BaseModel` provides `fit`, `predict`, and `predict_proba` for use
+in a scikit-learn pipeline. Confirm the exact signatures with Shepard.
+
+- `LogisticRegressionModel`
+- `RandomForestModel`, which also provides `feature_importances()`
+- `KNNModel`
+- `BaselineModel`, which predicts the majority class
+
+## HyperparameterTuner (T1, proposed)
+
+Use `GridSearchCV` over the full pipeline, with `StratifiedKFold(5)`
+and `roc_auc` scoring. This fits preprocessing within each training fold.
+
+## Evaluator (E1)
+
+Provide a model-based evaluation entry point, `compare()`, and a ROC plot.
+Report accuracy, precision, recall, F1, ROC-AUC, and the confusion matrix.
+Use predicted labels for the class-based metrics and positive-class
+scores for ROC-AUC and the ROC curve.
+
+## ExperimentRunner (E2)
+
+Coordinates the experiment workflow. Confirm its public methods with
+the card owner.
 | `predict_proba(X)` | Return class probabilities. The runner passes the probabilities for the positive class to `Evaluator` as `y_score` for ROC-AUC. |
