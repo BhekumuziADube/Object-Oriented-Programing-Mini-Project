@@ -38,3 +38,25 @@ def plot_missing_measurements(data):
     ax.set_title("Missing Measurements by Variable")
     fig.savefig(output, dpi=160, bbox_inches="tight")
     plt.close(fig) 
+
+
+def plot_measurements_by_outcome(data):
+    output = Path("docs/figures/measurements_by_outcome.png")
+    output.parent.mkdir(parents=True, exist_ok=True)
+
+    fig, axes = plt.subplots(1, 3, figsize=(10, 4), layout="constrained")
+
+    for ax, column in zip(axes, ["Glucose", "BMI", "Age"]):
+        values = data[column]
+        if column in {"Glucose", "BMI"}:
+            values = values.mask(values.eq(0))
+
+        groups = [values[data["Outcome"].eq(label)].dropna() for label in (0, 1)]
+        ax.boxplot(groups, positions=[0, 1])
+        ax.set_xticks([0, 1], ["Outcome 0", "Outcome 1"])
+        ax.set_title(column)
+        print(f"{column}: {groups[0].median():g} vs {groups[1].median():g}")
+
+    fig.suptitle("Glucose, BMI and Age by Diabetes Outcome")
+    fig.savefig(output, dpi=160, bbox_inches="tight")
+    plt.close(fig) 
