@@ -60,3 +60,17 @@ The method returns accuracy, precision, recall, F1, ROC-AUC, and
 a confusion matrix. Accuracy, precision, recall, F1, and the
 confusion matrix use predicted labels. ROC-AUC uses the model
 scores so it can assess performance across decision thresholds.
+
+## M1–M3 – Prediction Models
+
+Status: Proposed for team review. Confirm these signatures with the M1 owner.
+
+The model classes share the `BaseModel` interface so the evaluation
+runner can use the same workflow for logistic regression, random
+forest, and KNN classification.
+
+| Proposed method | Behaviour |
+| --- | --- |
+| `fit(X, y)` | Train the model using the training features and outcome labels. Return the fitted model instance. |
+| `predict(X)` | Return one predicted class label per row for `Evaluator`'s `y_pred` input. |
+| `predict_proba(X)` | Return class probabilities. The runner passes the probabilities for the positive class to `Evaluator` as `y_score` for ROC-AUC. |
