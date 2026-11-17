@@ -1,39 +1,36 @@
 # OOP Mini Project Report
 
-> Proposed outline for team review. Confirm the headings against Kanban plan v2.
+## 1. Introduction and objectives
+<!-- D3: Define the diabetes prediction problem, state the objectives,
+and explain how the team will evaluate success. -->
 
-## 1. Problem Statement, Objectives and Success Metrics
-<!-- D3: Define the prediction problem, objectives, and measures of success. -->
+## 2. Team process, Kanban and Git
+<!-- Co3: Explain how the team used the board, branches, and pull
+requests. Link to examples of reviews, pairing, and conflict resolution. -->
 
-## 2. Dataset and Data Dictionary
-<!-- Describe the Pima diabetes dataset, its variables, and the outcome. -->
+## 3. Dataset
+<!-- An1: Describe the data source, number of records, predictor variables,
+and meaning of Outcome. Summarise the raw data and link to the EDA findings. -->
 
-## 3. Exploratory Data Analysis
-<!-- An1: Include charts from the raw data and explain five findings. -->
+## 4–6. Data quality, cleaning, clean datasets, EDA
+<!-- REP2: Summarise the quality checks, explain how missing measurements
+were handled, describe the exported datasets, and interpret the EDA figures. -->
 
-## 4. Data Quality Assessment
-<!-- Summarise the data-quality checks, findings, and limitations. -->
+## 7. Software design, OOP
+<!-- Co2: Include the class diagram and explain how the classes work
+together, using examples from the project. -->
 
-## 5. Data Cleaning and Imputation
-<!-- Explain how missing values are identified, filled, and exported. -->
+## 8. Machine-learning method
+<!-- REP3: Describe the baseline, models, preprocessing order, tuning,
+and evaluation. Explain which steps are fitted on training data. -->
 
-## 6. Prediction Models and Tuning
-<!-- Describe the models and the hyperparameters compared. -->
+## 9–10. Results, discussion, limitations
+<!-- Co1: Present the model and imputation comparisons, interpret the
+main differences, and explain the limits of what the results show. -->
 
-## 7. System Design and Usage
-<!-- Co2: Include the class diagram and explain how to run the project. -->
+## 11. Conclusion
+<!-- REP3: Summarise the main finding in relation to the project objectives. -->
 
-## 8. Evaluation Method
-<!-- Describe the cross-validation setup, performance metrics, and steps to prevent data leakage. -->
-
-## 9. Results and Comparison
-<!-- Report the model and imputation results and explain the main differences. -->
-
-## 10. Software Testing
-<!-- Record what was tested, the expected behaviour, and the test outcomes. -->
-
-## 11. Team Collaboration
-<!-- Link to examples of pull requests, code reviews, pair programming, and conflict resolution. -->
-
-## 12. Conclusion and Limitations
-<!-- Summarise the findings, limitations, and possible improvements. -->
+## 12. Contributions table
+<!-- REP3: Record each member's contributions and link to the relevant
+issues, commits, pull requests, or reviews. -->
