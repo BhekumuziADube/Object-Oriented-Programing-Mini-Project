@@ -1,9 +1,20 @@
 # Project Interfaces
 
+## I1 – DataLoader
+
+`DataLoader(path)` accepts a CSV path as a string or `Path`.
+
+| Method | Behaviour |
+| --- | --- |
+| `load()` | Reads and validates the CSV, then returns a copy of the resulting pandas DataFrame. |
+| `summary()` | After `load()`, returns a dictionary containing `rows`, `columns`, and `positive_rate`. |
+
+`columns` is a list of column names. `positive_rate` is the proportion
+of records with `Outcome = 1`.
+
 ## C2 – Validity and Consistency Checks
 
-Module: `src/validity_consistency.py`  
-Interface confirmed in PR #40.
+Module `src/validity_consistency.py`. Interface confirmed in PR #40.
 
 `ValidityConsistencyChecks(df)` accepts a pandas DataFrame.
 
@@ -11,97 +22,90 @@ Interface confirmed in PR #40.
 | --- | --- |
 | `check_validity()` | One result dictionary for validity. |
 | `check_consistency()` | One result dictionary for consistency. |
-| `run_all()` | A dictionary with two keys, `"Validity"` and `"Consistency"`, each mapping to its result dictionary. |
+| `run_all()` | A dictionary with the keys `"Validity"` and `"Consistency"`, each mapping to its result dictionary. |
 
-Each result contains `dimension` (string), `passed` (boolean),
-`rows_checked` (integer), and `issues` (list). `passed` is `True`
-when `issues` is empty.
+Each result contains `dimension`, `passed`, `rows_checked`, and `issues`.
+`passed` is `True` when `issues` is empty. Each issue contains `column`,
+`rule`, `rows_affected`, and `example_rows` (up to 10 example row indices).
 
-Each issue contains `column`, `rule`, `rows_affected`, and
-`example_rows` (up to 10 example row indices).
-
-### Use in the C3 data-quality report
-
-Call `run_all()` once and report Validity and Consistency separately.
-Show the pass status, rows checked, and the number of rows affected
-by each rule. The same row can fail multiple rules, so adding the
-per-rule counts can double-count rows.
-
-## C4 – Imputer Base Class
-
-Module: `src/imputers.py`  
-Status: Proposed in PR #41. Confirm against the version merged into `develop`.
-
-`Imputer` is an abstract base class. Each imputation strategy implements
-the same two methods so it can be swapped into the same pipeline.
-
-| Method | Behaviour |
-| --- | --- |
-| `fit(self, X, y=None) -> Imputer` | Learns from the training data and returns `self`. |
-| `transform(self, X)` | Uses the fitted imputer to fill missing values and returns a copy of `X`. |
-
-`fit_transform()` is inherited from `TransformerMixin`. During
-cross-validation, fit the imputer on the training fold, then use
-`transform()` on the validation fold. This keeps validation data
-out of the fitting step.
-
-## DataLoader (I1)
-
-- `load()` loads the dataset.
-- `summary()` provides a dataset summary.
+The C3 report shows affected-row counts per rule because the same row
+can trigger multiple rules.
 
 ## CleaningLog
 
 - `add(step, dimension, column, issue, action, rows_affected, justification)`
   records a cleaning decision and its justification.
-- `to_frame()` returns the log as a table.
+- `to_frame()` returns the log as a pandas DataFrame.
 - The log is saved to `docs/cleaning_log.csv`.
 
-## Preprocessor (C6)
+## C4–C6 – Imputation strategies
 
-Split the data first. Within each split, apply these steps in order:
+Module `src/imputers.py`. `Imputer` defines the shared interface.
 
-1. `ZeroToNaN` converts zero placeholders in the designated measurement
-   columns to missing values.
-2. `StandardScaler` scales the features.
-3. An `Imputer` applies the selected missing-value strategy.
-4. The model fits on the processed training features.
+| Method | Behaviour |
+| --- | --- |
+| `fit(X, y=None)` | Learns from the training data and returns `self`. |
+| `transform(X)` | Applies the fitted strategy and returns the transformed data. |
+| `fit_transform(X, y=None)` | Fits and transforms the data using the method inherited from `TransformerMixin`. |
 
-The preprocessing pipeline contains `ZeroToNaN`, `StandardScaler`,
-and the imputer, in that order. Fit the pipeline on training data
-and use the fitted pipeline to transform the held-out data.
-`ZerosKeptImputer` is the no-op strategy described in the plan.
+The plan names `MedianImputer`, `KNNImputerStrategy`, and
+`ZerosKeptImputer`. `ZerosKeptImputer` is the no-op imputation strategy.
 
-## Data split (W1, proposed)
+## W1 – Data split
 
-`split_data(df, test_size=0.2, random_state=42)` returns
-`X_train`, `X_test`, `y_train`, and `y_test`, in that order.
-The split is stratified on `Outcome`.
+Proposed interface from Kanban plan v2.
 
-## Prediction models (M1–M3)
+`split_data(df, test_size=0.2, random_state=42)` splits the data
+with stratification on `Outcome`. It returns `X_train`, `X_test`,
+`y_train`, and `y_test`, in that order.
 
-`BaseModel` provides `fit`, `predict`, and `predict_proba` for use
-in a scikit-learn pipeline. Confirm the exact signatures with Shepard.
+## C6 – Preprocessor
 
-- `LogisticRegressionModel`
-- `RandomForestModel`, which also provides `feature_importances()`
-- `KNNModel`
-- `BaselineModel`, which predicts the majority class
+Split the data first. The preprocessing pipeline applies `ZeroToNaN`,
+`StandardScaler`, and an `Imputer`, in that order, before the model.
+`ZeroToNaN` converts zero placeholders in designated measurement
+columns to missing values.
 
-## HyperparameterTuner (T1, proposed)
+Fit the pipeline on training data and apply the fitted preprocessing
+to the held-out data. During cross-validation, fit each pipeline
+on that fold's training portion.
 
-Use `GridSearchCV` over the full pipeline, with `StratifiedKFold(5)`
-and `roc_auc` scoring. This fits preprocessing within each training fold.
+## M1–M3 – Prediction models
 
-## Evaluator (E1)
+Bhekumuzi proposed that `BaseModel` inherit `sklearn.base.BaseEstimator`
+for compatibility with scikit-learn cloning and use `fit()` as the
+training method. Shepard's confirmation for M1 is pending.
 
-Provide a model-based evaluation entry point, `compare()`, and a ROC plot.
-Report accuracy, precision, recall, F1, ROC-AUC, and the confusion matrix.
-Use predicted labels for the class-based metrics and positive-class
-scores for ROC-AUC and the ROC curve.
+| Proposed method | Behaviour |
+| --- | --- |
+| `fit(X, y)` | Trains the model on features `X` and labels `y`, then returns `self`. |
+| `predict(X)` | Returns a predicted class label for each row. |
+| `predict_proba(X)` | Returns class probabilities for each row. |
 
-## ExperimentRunner (E2)
+The planned models are `LogisticRegressionModel`, `RandomForestModel`,
+`KNNModel`, and the majority-class `BaselineModel`. `RandomForestModel`
+also provides `feature_importances()`.
 
-Coordinates the experiment workflow. Confirm its public methods with
-the card owner.
-| `predict_proba(X)` | Return class probabilities. The runner passes the probabilities for the positive class to `Evaluator` as `y_score` for ROC-AUC. |
+## T1 – HyperparameterTuner
+
+Proposed approach from Kanban plan v2. Use `GridSearchCV` over the full
+pipeline, with `StratifiedKFold(5)` and `roc_auc` scoring.
+
+## E1 – Evaluator
+
+The evaluator accepts fitted models or pipelines that expose
+`predict()` and `predict_proba()`.
+
+| Method | Behaviour |
+| --- | --- |
+| `evaluate_model(model, X, y)` | Gets predictions and positive-class probabilities from the model and evaluates them against `y`. |
+| `compare(models, X, y)` | Evaluates models on the same data and returns a pandas DataFrame of their metrics. |
+
+Report accuracy, precision, recall, F1, ROC-AUC, and a confusion matrix.
+Use predicted labels for the class-based metrics and confusion matrix.
+Use positive-class probabilities for ROC-AUC and the ROC plot.
+
+## E2 – ExperimentRunner
+
+Coordinates the experiment workflow. The public method signatures
+are pending confirmation from the E2 owner.
