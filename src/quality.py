@@ -11,9 +11,13 @@ the same keys, so the report and the cleaning log can treat all checks alike.
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 from typing import Dict, List
 
 import pandas as pd
+
+from src.validity_consistency import ValidityConsistencyChecks
 
 Finding = Dict[str, object]
 
@@ -126,3 +130,87 @@ class DataQualityChecker:
                 "cannot be proven from the data alone",
             ),
         ]
+
+    def check_accuracy(self) -> List[Finding]:
+        """Record the evidence needed to verify measurement accuracy."""
+        return [
+            {
+                "dimension": "Accuracy",
+                "check": "Verification against source records",
+                "column": "(dataset)",
+                "issues": None,
+                "of": None,
+                "percent": None,
+                "note": "Not assessed. No reference records were supplied "
+                        "to verify the recorded measurements.",
+            }
+        ]
+
+    def check_timeliness(self) -> List[Finding]:
+        """Record the dating information needed to assess timeliness."""
+        return [
+            {
+                "dimension": "Timeliness",
+                "check": "Collection and update dates",
+                "column": "(dataset)",
+                "issues": None,
+                "of": None,
+                "percent": None,
+                                "note": (
+                    "Not assessed. The project data dictionary places "
+                    "collection in the late 1980s. The CSV has no date "
+                    "column, so timeliness cannot be assessed for "
+                    "individual records."
+                ),
+            }
+        ]
+
+    def report(
+        self, output_path: str | Path = "docs/data_quality_report.md"
+    ) -> Path:
+        """Run the quality checks and write their findings to Markdown."""
+        findings = self.check_completeness() + self.check_uniqueness()
+
+        for dimension, result in ValidityConsistencyChecks(self._df).run_all().items():
+            if result["passed"]:
+                findings.append(
+                    self._finding(
+                        dimension, "All rules", "(dataset)", 0,
+                        result["rows_checked"], "Passed",
+                    )
+                )
+            for issue in result["issues"]:
+                findings.append(
+                    self._finding(
+                        dimension, issue["rule"], issue["column"],
+                        issue["rows_affected"], result["rows_checked"],
+                    )
+                )
+
+        findings.extend(self.check_accuracy())
+        findings.extend(self.check_timeliness())
+
+        lines = [
+            "# Raw data quality report",
+            "",
+            f"Records checked: {len(self._df)}",
+            "",
+            "Counts are reported per check. The same row may appear "
+            "under several rules.",
+            "",
+            "| Dimension | Check | Column | Issues | Of | Percent | Note |",
+            "| --- | --- | --- | ---: | ---: | ---: | --- |",
+        ]
+        columns = ("dimension", "check", "column", "issues", "of", "percent", "note")
+        for finding in findings:
+            cells = [
+                str(finding[key]).replace("|", r"\|")
+                if finding[key] is not None else "—"
+                for key in columns
+            ]
+            lines.append("| " + " | ".join(cells) + " |")
+
+        path = Path(output_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return path
