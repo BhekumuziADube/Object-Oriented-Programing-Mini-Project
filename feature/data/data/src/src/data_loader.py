@@ -24,7 +24,7 @@ class DataLoader:
     ]
     TARGET_COLUMN = "Outcome"
 
-    def _init_(self, path: str | Path):
+    def __init__ (self, path: str | Path):
         self._path = Path(path)
         self._data: pd.DataFrame | None = None
 
