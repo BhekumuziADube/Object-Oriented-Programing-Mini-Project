@@ -74,7 +74,7 @@ class KNNImputerStrategy(Imputer):
 # Registry of the available imputers: name -> class.
 # Each imputer card adds one line inside the brace
 
- IMPUTERS: dict[str, type[Imputer]] = {
+IMPUTERS: dict[str, type[Imputer]] = {
     "knn": KNNImputerStrategy,
     "median": MedianImputer,
 }
