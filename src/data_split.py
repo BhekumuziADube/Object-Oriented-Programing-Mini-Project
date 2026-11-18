@@ -49,3 +49,12 @@ def split_data(
         random_state=random_state,
         stratify=target,
     )
+
+
+if __name__ == "__main__":
+    # Quick manual check: python src/data_split.py
+    data = pd.read_csv("data/diabetes.csv")
+    X_train, X_test, y_train, y_test = split_data(data)
+    print("train rows:", len(X_train), "test rows:", len(X_test))
+    print("positive rate train:", round(y_train.mean(), 3))
+    print("positive rate test:", round(y_test.mean(), 3))
