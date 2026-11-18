@@ -156,8 +156,12 @@ class DataQualityChecker:
                 "issues": None,
                 "of": None,
                 "percent": None,
-                "note": "Not assessed. The report was generated without "
-                        "verified collection or update dates.",
+                                "note": (
+                    "Not assessed. The project data dictionary places "
+                    "collection in the late 1980s. The CSV has no date "
+                    "column, so timeliness cannot be assessed for "
+                    "individual records."
+                ),
             }
         ]
 

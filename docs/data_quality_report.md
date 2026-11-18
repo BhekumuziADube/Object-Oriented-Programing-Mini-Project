@@ -26,4 +26,4 @@ Counts are reported per check. The same row may appear under several rules.
 | Validity | All rules | (dataset) | 0 | 768 | 0.0 | Passed |
 | Consistency | All rules | (dataset) | 0 | 768 | 0.0 | Passed |
 | Accuracy | Verification against source records | (dataset) | — | — | — | Not assessed. No reference records were supplied to verify the recorded measurements. |
-| Timeliness | Collection and update dates | (dataset) | — | — | — | Not assessed. The report was generated without verified collection or update dates. |
+| Timeliness | Collection and update dates | (dataset) | — | — | — | Not assessed. The project data dictionary places collection in the late 1980s. The CSV has no date column, so timeliness cannot be assessed for individual records. |
