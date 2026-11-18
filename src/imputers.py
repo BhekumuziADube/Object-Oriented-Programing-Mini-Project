@@ -58,4 +58,5 @@ class MedianImputer(Imputer):
 # Registry of the available imputers: name -> class.
 # Each imputer card adds one line inside the braces.
 IMPUTERS: dict[str, type[Imputer]] = {
+    "median": MedianImputer,
 }
