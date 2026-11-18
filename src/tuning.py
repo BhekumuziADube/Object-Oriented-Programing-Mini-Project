@@ -96,3 +96,60 @@ class HyperparameterTuner:
         )
         self._search.fit(X, y)
         return self
+
+    def _check_fitted(self) -> None:
+        """Stop with a clear message if fit() has not been called."""
+        if self._search is None:
+            raise RuntimeError("Call fit() before using the results.")
+
+    def best_params(self) -> dict:
+        """Return the best settings found."""
+        self._check_fitted()
+        return dict(self._search.best_params_)
+
+    def best_score(self) -> float:
+        """Return the best mean cross-validation score."""
+        self._check_fitted()
+        return float(self._search.best_score_)
+
+    def best_estimator(self):
+        """Return the best pipeline, refitted on all the training data."""
+        self._check_fitted()
+        return self._search.best_estimator_
+
+    def cv_results(self) -> pd.DataFrame:
+        """Return every combination with its mean score, best first."""
+        self._check_fitted()
+        results = pd.DataFrame(self._search.cv_results_)
+        columns = ["params", "mean_test_score", "std_test_score", "rank_test_score"]
+        return results[columns].sort_values("rank_test_score").reset_index(drop=True)
+
+
+if __name__ == "__main__":
+    # Quick manual check: python src/tuning.py (uses the training part only)
+    import numpy as np
+    from sklearn.impute import SimpleImputer
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.model_selection import train_test_split
+    from sklearn.preprocessing import StandardScaler
+
+    data = pd.read_csv("data/diabetes.csv")
+    for column in ["Glucose", "BloodPressure", "SkinThickness", "Insulin", "BMI"]:
+        data[column] = data[column].replace(0, np.nan)
+    X = data.drop(columns="Outcome")
+    y = data["Outcome"]
+    X_train, _, y_train, _ = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
+
+    pipeline = Pipeline(
+        [
+            ("scale", StandardScaler()),
+            ("impute", SimpleImputer(strategy="median")),
+            ("model", LogisticRegression(max_iter=1000)),
+        ]
+    )
+    tuner = HyperparameterTuner(pipeline, LOGISTIC_GRID).fit(X_train, y_train)
+    print("combinations tried:", tuner.n_combinations)
+    print("best settings:", tuner.best_params())
+    print("best CV roc_auc:", round(tuner.best_score(), 3))
