@@ -1,8 +1,43 @@
 # OOP Mini Project Report
 
 ## 1. Introduction and objectives
-<!-- D3: Define the diabetes prediction problem, state the objectives,
-and explain how the team will evaluate success. -->
+
+### Problem statement
+
+This project uses the eight predictors in the Pima diabetes dataset to
+classify the recorded binary diabetes outcome (`Outcome`). In selected
+measurement fields, recorded zeros are treated as missing. Because the
+choice of imputation method can influence model performance, the project
+compares median and k-nearest neighbours (KNN) imputation under the same
+evaluation procedure.
+
+### Objectives
+
+1. Assess the quality of the raw data by identifying missing measurements
+   and documenting values flagged by the validity and consistency checks.
+2. Compare logistic regression, random forest, and KNN classifiers with
+   a majority-class baseline.
+3. Assess how median and KNN imputation affect each classifier by
+   comparing them on identical validation splits.
+
+### Success metrics
+
+Use ROC-AUC as the primary metric for comparing how well models
+distinguish positive from negative outcomes across classification
+thresholds. Report accuracy, precision, recall, F1, and the confusion
+matrix at the decision rule used to generate class predictions. Recall
+shows the proportion of positive cases detected, while the false-negative
+count shows how many positive cases the model missed.
+
+Evaluate each model and imputation strategy on the same stratified
+validation splits. Fit preprocessing and models using only the training
+data within each split, then evaluate on the held-out data. Report the
+mean and standard deviation of ROC-AUC across the validation splits.
+Judge improvement by comparing each model with the majority-class
+baseline and by examining the direction, size, and consistency of the
+ROC-AUC differences between median and KNN imputation for the same
+classifier. Interpret the ranking alongside recall and precision so
+that any trade-offs in detecting positive cases are visible.
 
 ## 2. Team process, Kanban and Git
 <!-- Co3: Explain how the team used the board, branches, and pull
