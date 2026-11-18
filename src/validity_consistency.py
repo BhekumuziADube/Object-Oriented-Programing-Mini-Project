@@ -77,7 +77,39 @@ class ValidityConsistencyChecks:
             "rows_checked": len(self._df),
             "issues": issues,
         }
+    def check_validity(self) -> dict:
+        """Check numeric ranges and allowed Outcome labels."""
+        issues = []
 
+        for column, (minimum, maximum) in VALID_RANGES.items():
+            if column not in self._df.columns:
+                continue
+
+            values = pd.to_numeric(self._df[column], errors="coerce")
+            observed = values.notna()
+            if column in HIDDEN_ZERO_COLUMNS:
+                observed &= values.ne(0)
+
+            outside_range = observed & ~values.between(minimum, maximum)
+            if outside_range.any():
+                issues.append(
+                    self._issue(
+                        column,
+                        f"must be between {minimum} and {maximum} inclusive",
+                        outside_range,
+                    )
+                )
+
+        if "Outcome" in self._df.columns:
+            outcome = pd.to_numeric(self._df["Outcome"], errors="coerce")
+            invalid = outcome.notna() & ~outcome.isin([0, 1])
+            if invalid.any():
+                issues.append(
+                    self._issue("Outcome", "must be 0 or 1", invalid)
+                )
+
+        return self._result("Validity", issues)
+        
     def check_consistency(self) -> dict:
         """Check data types, whole numbers and the Pregnancies and Age rule."""
         issues = []
