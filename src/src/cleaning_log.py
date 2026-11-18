@@ -60,3 +60,16 @@ class CleaningLog:
     def entries(self) -> Tuple[LogEntry, ...]:
         """All entries as a read-only tuple."""
         return tuple(self._entries)
+
+    def to_frame(self) -> pd.DataFrame:
+        """The log as a table (has the right columns even when empty)."""
+        return pd.DataFrame(
+            [asdict(e) for e in self._entries], columns=self.COLUMNS
+        )
+
+    def save(self, path: Union[str, Path] = "docs/cleaning_log.csv") -> Path:
+        """Write the log to a CSV file, creating the folder if needed."""
+        target = Path(path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        self.to_frame().to_csv(target, index=False)
+        return target
