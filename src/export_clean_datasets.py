@@ -17,7 +17,7 @@ import pandas as pd
 from src.cleaning_log import CleaningLog
 from src.data_split import split_data
 from src.imputers import IMPUTERS
-from src.src.preprocessor import Preprocessor
+from src.preprocessor import Preprocessor
 
 
 def export_datasets(input_path, output_dir="data/processed"):
