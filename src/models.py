@@ -17,6 +17,9 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
+from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.dummy import DummyClassifier
+from sklearn.utils.validation import check_is_fitted
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 
@@ -63,6 +66,21 @@ class LogisticRegressionModel(BaseModel):
     def build_estimator(self):
         return LogisticRegression(C=self._C, max_iter=1000)
 
+
+class BaselineModel(BaseModel):
+    """Majority-class baseline: always guesses the most common outcome (card X1).
+
+    Any real model has to beat this. Its probabilities are the class shares in
+    the training data, the same for every patient, so its ROC-AUC is 0.5.
+    """
+
+    def __init__(self) -> None:
+        super().__init__("Majority-class Baseline")
+
+    def build_estimator(self):
+        return DummyClassifier(strategy="prior")
+      
+      
 class KNNModel(BaseModel):
     """K-nearest neighbours classifier for card M3."""
 
