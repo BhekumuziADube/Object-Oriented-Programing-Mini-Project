@@ -1,0 +1,15 @@
+step,dimension,column,issue,action,rows_affected,justification
+1,Completeness,Glucose,4 hidden zeros in the training rows,Converted 0 to missing inside the pipeline,4,Zero is impossible for this measurement
+2,Completeness,BloodPressure,23 hidden zeros in the training rows,Converted 0 to missing inside the pipeline,23,Zero is impossible for this measurement
+3,Completeness,SkinThickness,175 hidden zeros in the training rows,Converted 0 to missing inside the pipeline,175,Zero is impossible for this measurement
+4,Completeness,Insulin,290 hidden zeros in the training rows,Converted 0 to missing inside the pipeline,290,Zero is impossible for this measurement
+5,Completeness,BMI,9 hidden zeros in the training rows,Converted 0 to missing inside the pipeline,9,Zero is impossible for this measurement
+6,Consistency,All columns,Verify median train export,Saved and reloaded diabetes_median_train.csv,614,"Preserved row identifiers, columns and Outcome; verified finite features and CSV round-trip."
+7,Consistency,All columns,Verify median test export,Saved and reloaded diabetes_median_test.csv,154,"Preserved row identifiers, columns and Outcome; verified finite features and CSV round-trip."
+8,Completeness,Glucose,4 hidden zeros in the training rows,Converted 0 to missing inside the pipeline,4,Zero is impossible for this measurement
+9,Completeness,BloodPressure,23 hidden zeros in the training rows,Converted 0 to missing inside the pipeline,23,Zero is impossible for this measurement
+10,Completeness,SkinThickness,175 hidden zeros in the training rows,Converted 0 to missing inside the pipeline,175,Zero is impossible for this measurement
+11,Completeness,Insulin,290 hidden zeros in the training rows,Converted 0 to missing inside the pipeline,290,Zero is impossible for this measurement
+12,Completeness,BMI,9 hidden zeros in the training rows,Converted 0 to missing inside the pipeline,9,Zero is impossible for this measurement
+13,Consistency,All columns,Verify knn train export,Saved and reloaded diabetes_knn_train.csv,614,"Preserved row identifiers, columns and Outcome; verified finite features and CSV round-trip."
+14,Consistency,All columns,Verify knn test export,Saved and reloaded diabetes_knn_test.csv,154,"Preserved row identifiers, columns and Outcome; verified finite features and CSV round-trip."
