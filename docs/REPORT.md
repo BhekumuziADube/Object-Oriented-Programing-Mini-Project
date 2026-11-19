@@ -65,6 +65,47 @@ The zeros pull the averages down and inflate the spread, most of all for Insulin
 - The data was collected in the late 1980s from women of Pima Indian heritage aged 21 or older, so the results may not apply to other populations, countries or years.
 - With no patient ID, uniqueness is only checked on whole rows.
 
+### 5. Data cleaning and imputation
+
+#### 5.1 Approach
+
+The cleaning follows the data quality findings in part 4. Hidden zeros in Glucose, BloodPressure, SkinThickness, Insulin and BMI are converted to missing values and then filled by an imputer. Zeros in Pregnancies are left alone. The project compares three ways of handling the zeros, so that the effect of the choice can be measured:
+
+| Method | What it does |
+| --- | --- |
+| Median imputation | Replaces each missing value with the median of that column in the training data. The median is not pulled by very large values, which matters for Insulin. |
+| KNN imputation | Replaces each missing value using the 5 most similar patients in the training data. The columns are scaled first so that Insulin, which has the largest numbers, does not dominate the distances. |
+| Zeros kept (control) | Leaves the zeros in the data as they are, to show what happens when they are not repaired. This pipeline skips the zero-to-missing step. |
+
+A majority-class baseline model, which always predicts the most common outcome, gives a second reference point.
+
+#### 5.2 Order of steps and prevention of data leakage
+
+1. The data is split first: 80% training and 20% test (614 and 154 patients), stratified on Outcome, with `random_state` 42.
+2. All other steps run inside one scikit-learn pipeline: zero-to-missing, scaling, imputation, then the model.
+3. Every step learns only from the training data. During cross-validation and tuning, each fold fits the scaler and the imputer on its own training part, so the validation part never influences them. The test set is used once, at the end.
+
+#### 5.3 Outliers
+
+Outliers are flagged with the 1.5 x IQR rule but not deleted, unless a value is physiologically impossible. None of the flagged values was impossible, so no row was removed.
+
+#### 5.4 Cleaning log
+
+Every cleaning action is recorded by the CleaningLog class in `docs/cleaning_log.csv`. A summary of the main actions on the full dataset:
+
+| Dimension | Column | Action | Rows affected |
+| --- | --- | --- | --- |
+| Completeness | Glucose | Zeros converted to missing, then imputed | 5 |
+| Completeness | BloodPressure | Zeros converted to missing, then imputed | 35 |
+| Completeness | SkinThickness | Zeros converted to missing, then imputed | 227 |
+| Completeness | Insulin | Zeros converted to missing, then imputed | 374 |
+| Completeness | BMI | Zeros converted to missing, then imputed | 11 |
+| Uniqueness | All columns | Duplicate rows searched; none found, none removed | 0 |
+| Validity | All columns | Values outside valid ranges searched; none found | 0 |
+| Accuracy | Eight columns | Outliers flagged, none deleted | see 4.1 |
+
+`[[CHECK: compare this table with docs/cleaning_log.csv and correct any row that differs. If the log has more steps, add them here.]]`
+
 ## 7. Software design, OOP
 <!-- Co2: Include the class diagram and explain how the classes work
 together, using examples from the project. -->
