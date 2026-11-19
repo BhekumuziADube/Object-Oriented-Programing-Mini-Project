@@ -84,7 +84,7 @@ class KNNModel(BaseModel):
             p=self._p,
         )
       
- class RandomForestModel(BaseModel):
+class RandomForestModel(BaseModel):
     """Random forest: many decision trees that vote together (card M2)."""
 
     def __init__(
