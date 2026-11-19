@@ -1,0 +1,216 @@
+"""DataQualityChecker: checks a dataset against the six data-quality dimensions.
+
+Card C1 (completeness and uniqueness). Author: Shepard.
+
+Teammates add their checks to this same class:
+    C2 (Bhekumuzi): check_validity, check_consistency
+    C3 (Nicole):    check_accuracy, timeliness note, report()
+
+Every check returns a list of "findings". A finding is a plain dictionary with
+the same keys, so the report and the cleaning log can treat all checks alike.
+"""
+from __future__ import annotations
+
+from pathlib import Path
+
+from typing import Dict, List
+
+import pandas as pd
+
+from src.validity_consistency import ValidityConsistencyChecks
+
+Finding = Dict[str, object]
+
+
+class DataQualityChecker:
+    """Run data-quality checks on a DataFrame without changing it."""
+
+    # In this dataset a zero in these columns is impossible for a living
+    # patient, so it really means "not recorded" (a hidden missing value).
+    HIDDEN_ZERO_COLUMNS: List[str] = [
+        "Glucose",
+        "BloodPressure",
+        "SkinThickness",
+        "Insulin",
+        "BMI",
+    ]
+    TARGET: str = "Outcome"
+
+    def __init__(self, df: pd.DataFrame) -> None:
+        if not isinstance(df, pd.DataFrame):
+            raise TypeError("DataQualityChecker needs a pandas DataFrame.")
+        if df.empty:
+            raise ValueError("Cannot check an empty DataFrame.")
+        self._df = df.copy()  # work on a copy so the caller's data is safe
+
+    @staticmethod
+    def _finding(
+        dimension: str,
+        check: str,
+        column: str,
+        issues: int,
+        total: int,
+        note: str = "",
+    ) -> Finding:
+        """Build one finding: how many of `total` values/rows have the issue."""
+        percent = round(100 * issues / total, 1) if total else 0.0
+        return {
+            "dimension": dimension,
+            "check": check,
+            "column": column,
+            "issues": int(issues),
+            "of": int(total),
+            "percent": percent,
+            "note": note,
+        }
+
+    def check_completeness(self) -> List[Finding]:
+        """Find blank cells and hidden missing values (impossible zeros)."""
+        total = len(self._df)
+        findings: List[Finding] = []
+
+        # 1) blank cells (NaN) in every column
+        for col in self._df.columns:
+            blanks = int(self._df[col].isna().sum())
+            findings.append(
+                self._finding("Completeness", "Blank (NaN) cells", col, blanks, total)
+            )
+
+        # 2) zeros that really mean "not recorded"
+        present = [c for c in self.HIDDEN_ZERO_COLUMNS if c in self._df.columns]
+        for col in present:
+            zeros = int((self._df[col] == 0).sum())
+            findings.append(
+                self._finding(
+                    "Completeness",
+                    "Zero recorded where zero is impossible",
+                    col,
+                    zeros,
+                    total,
+                    "Hidden missing value",
+                )
+            )
+
+        # 3) how many patients are affected by at least one hidden zero
+        if present:
+            rows_hit = int((self._df[present] == 0).any(axis=1).sum())
+            findings.append(
+                self._finding(
+                    "Completeness",
+                    "Rows with at least one hidden zero",
+                    "(any of: " + ", ".join(present) + ")",
+                    rows_hit,
+                    total,
+                    "Dropping these rows would lose a large share of the data",
+                )
+            )
+        return findings
+
+    def check_uniqueness(self) -> List[Finding]:
+        """Find duplicate records."""
+        total = len(self._df)
+        # an ID column would make every row unique, so ignore it here
+        data = self._df.drop(columns=["PatientID"], errors="ignore")
+
+        full_dups = int(data.duplicated().sum())
+        feature_dups = int(
+            data.drop(columns=[self.TARGET], errors="ignore").duplicated().sum()
+        )
+        return [
+            self._finding(
+                "Uniqueness", "Fully duplicated rows", "(all columns)", full_dups, total
+            ),
+            self._finding(
+                "Uniqueness",
+                "Duplicate rows ignoring Outcome",
+                "(feature columns)",
+                feature_dups,
+                total,
+                "The file has no patient ID, so uniqueness of patients "
+                "cannot be proven from the data alone",
+            ),
+        ]
+
+    def check_accuracy(self) -> List[Finding]:
+        """Record the evidence needed to verify measurement accuracy."""
+        return [
+            {
+                "dimension": "Accuracy",
+                "check": "Verification against source records",
+                "column": "(dataset)",
+                "issues": None,
+                "of": None,
+                "percent": None,
+                "note": "Not assessed. No reference records were supplied "
+                        "to verify the recorded measurements.",
+            }
+        ]
+
+    def check_timeliness(self) -> List[Finding]:
+        """Record the dating information needed to assess timeliness."""
+        return [
+            {
+                "dimension": "Timeliness",
+                "check": "Collection and update dates",
+                "column": "(dataset)",
+                "issues": None,
+                "of": None,
+                "percent": None,
+                                "note": (
+                    "Not assessed. The project data dictionary places "
+                    "collection in the late 1980s. The CSV has no date "
+                    "column, so timeliness cannot be assessed for "
+                    "individual records."
+                ),
+            }
+        ]
+
+    def report(
+        self, output_path: str | Path = "docs/data_quality_report.md"
+    ) -> Path:
+        """Run the quality checks and write their findings to Markdown."""
+        findings = self.check_completeness() + self.check_uniqueness()
+
+        for dimension, result in ValidityConsistencyChecks(self._df).run_all().items():
+            if result["passed"]:
+                findings.append(
+                    self._finding(
+                        dimension, "All rules", "(dataset)", 0,
+                        result["rows_checked"], "Passed",
+                    )
+                )
+            for issue in result["issues"]:
+                findings.append(
+                    self._finding(
+                        dimension, issue["rule"], issue["column"],
+                        issue["rows_affected"], result["rows_checked"],
+                    )
+                )
+
+        findings.extend(self.check_accuracy())
+        findings.extend(self.check_timeliness())
+
+        lines = [
+            "# Raw data quality report",
+            "",
+            f"Records checked: {len(self._df)}",
+            "",
+            "Counts are reported per check. The same row may appear "
+            "under several rules.",
+            "",
+            "| Dimension | Check | Column | Issues | Of | Percent | Note |",
+            "| --- | --- | --- | ---: | ---: | ---: | --- |",
+        ]
+        columns = ("dimension", "check", "column", "issues", "of", "percent", "note")
+        for finding in findings:
+            cells = [
+                str(finding[key]).replace("|", r"\|")
+                if finding[key] is not None else "—"
+                for key in columns
+            ]
+            lines.append("| " + " | ".join(cells) + " |")
+
+        path = Path(output_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return path
