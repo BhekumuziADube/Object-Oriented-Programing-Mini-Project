@@ -27,7 +27,14 @@ LOGISTIC_GRID = {
     "solver": ["lbfgs", "liblinear"],
 }
 
-
+# Random Forest grid (card T2). Author: Nicole.
+# 2 tree counts × 3 depth limits × 2 leaf sizes = 12 combinations.
+# The tuner adds the pipeline's model-step prefix automatically.
+RANDOM_FOREST_GRID = {
+    "n_estimators": [100, 200],
+    "max_depth": [None, 5, 10],
+    "min_samples_leaf": [1, 3],
+}
 class HyperparameterTuner:
     """Searches a grid of settings with stratified cross-validation.
 
