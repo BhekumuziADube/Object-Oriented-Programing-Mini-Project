@@ -83,34 +83,6 @@ class ZerosKeptImputer(Imputer):
         return X.copy()
 
 
-
-
-class ZerosKeptImputer(Imputer):
-    """Control imputer that changes nothing: the zeros stay in the data (card X1).
-
-    It measures what happens when the hidden zeros are NOT repaired. Because it
-    fills nothing, a pipeline that uses it must skip the ZeroToNaN step;
-    keeps_zeros tells the pipeline builder to do that. If a missing value (NaN)
-    reaches this imputer it stops with a clear message instead of passing the
-    problem on to the model.
-    """
-
-    keeps_zeros = True
-
-    def fit(self, X, y=None) -> "ZerosKeptImputer":
-        """Nothing to learn; return self."""
-        return self
-
-    def transform(self, X):
-        """Return a copy of X exactly as it is."""
-        if pd.DataFrame(X).isna().any().any():
-            raise ValueError(
-                "ZerosKeptImputer does not fill missing values. "
-                "Skip the ZeroToNaN step when you use this control."
-            )
-        return X.copy()
-
-
 # Registry of the available imputers: name -> class.
 # Each imputer card adds one line inside the braces.
 IMPUTERS: dict[str, type[Imputer]] = {
