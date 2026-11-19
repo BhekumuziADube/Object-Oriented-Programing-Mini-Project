@@ -9,6 +9,7 @@ Teammates add their models in this same file:
 Every model follows the same interface, so the tuner, evaluator and
 experiment runner can use any of them without knowing which one it is.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -16,6 +17,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 
 
@@ -61,8 +63,28 @@ class LogisticRegressionModel(BaseModel):
     def build_estimator(self):
         return LogisticRegression(C=self._C, max_iter=1000)
 
+class KNNModel(BaseModel):
+    """K-nearest neighbours classifier for card M3."""
 
-class RandomForestModel(BaseModel):
+    def __init__(
+        self,
+        n_neighbors: int = 5,
+        weights: str = "uniform",
+        p: int = 2,
+    ) -> None:
+        self._n_neighbors = n_neighbors
+        self._weights = weights
+        self._p = p
+        super().__init__("KNN")
+
+    def build_estimator(self):
+        return KNeighborsClassifier(
+            n_neighbors=self._n_neighbors,
+            weights=self._weights,
+            p=self._p,
+        )
+      
+ class RandomForestModel(BaseModel):
     """Random forest: many decision trees that vote together (card M2)."""
 
     def __init__(
