@@ -14,7 +14,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 import numpy as np
+import pandas as pd
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 
 
 class BaseModel(ABC):
