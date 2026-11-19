@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.impute import SimpleImputer
+from sklearn.impute import KNNImputer, SimpleImputer
 from sklearn.utils.validation import check_is_fitted
 
 
@@ -54,6 +54,8 @@ class MedianImputer(Imputer):
             return pd.DataFrame(filled, columns=X.columns, index=X.index)
         return filled
 
+class KNNImputerStrategy(Imputer):
+    """Fill missing values using nearby rows from the training data."""
 
 
 
@@ -83,9 +85,25 @@ class ZerosKeptImputer(Imputer):
         return X.copy()
 
 
+    def __init__(self, n_neighbors: int = 5):
+        self.n_neighbors = n_neighbors
+
+    def fit(self, X, y=None) -> "KNNImputerStrategy":
+        self.imputer_ = KNNImputer(n_neighbors=self.n_neighbors)
+        self.imputer_.fit(X)
+        return self
+
+    def transform(self, X):
+        check_is_fitted(self, "imputer_")
+        filled = self.imputer_.transform(X)
+        if isinstance(X, pd.DataFrame):
+            return pd.DataFrame(filled, index=X.index, columns=X.columns)
+        return filled
 # Registry of the available imputers: name -> class.
-# Each imputer card adds one line inside the braces.
+# Each imputer card adds one line inside the brace
+
 IMPUTERS: dict[str, type[Imputer]] = {
     "zeros_kept": ZerosKeptImputer,
+    "knn": KNNImputerStrategy,
     "median": MedianImputer,
 }
