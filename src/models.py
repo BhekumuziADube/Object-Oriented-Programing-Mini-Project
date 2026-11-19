@@ -9,15 +9,19 @@ Teammates add their models in this same file:
 Every model follows the same interface, so the tuner, evaluator and
 experiment runner can use any of them without knowing which one it is.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
 import numpy as np
+import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.dummy import DummyClassifier
 from sklearn.utils.validation import check_is_fitted
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 
 class BaseModel(ABC):
@@ -75,3 +79,58 @@ class BaselineModel(BaseModel):
 
     def build_estimator(self):
         return DummyClassifier(strategy="prior")
+      
+      
+class KNNModel(BaseModel):
+    """K-nearest neighbours classifier for card M3."""
+
+    def __init__(
+        self,
+        n_neighbors: int = 5,
+        weights: str = "uniform",
+        p: int = 2,
+    ) -> None:
+        self._n_neighbors = n_neighbors
+        self._weights = weights
+        self._p = p
+        super().__init__("KNN")
+
+    def build_estimator(self):
+        return KNeighborsClassifier(
+            n_neighbors=self._n_neighbors,
+            weights=self._weights,
+            p=self._p,
+        )
+      
+class RandomForestModel(BaseModel):
+    """Random forest: many decision trees that vote together (card M2)."""
+
+    def __init__(
+        self,
+        n_estimators: int = 100,
+        max_depth: int | None = None,
+        min_samples_leaf: int = 1,
+        random_state: int = 42,
+    ) -> None:
+        self._n_estimators = n_estimators
+        self._max_depth = max_depth
+        self._min_samples_leaf = min_samples_leaf
+        self._random_state = random_state
+        super().__init__("Random Forest")
+
+    def build_estimator(self):
+        return RandomForestClassifier(
+            n_estimators=self._n_estimators,
+            max_depth=self._max_depth,
+            min_samples_leaf=self._min_samples_leaf,
+            random_state=self._random_state,
+        )
+
+    def feature_importances(self) -> pd.Series:
+        """How much each feature matters, largest first (after training)."""
+        self._check_trained()
+        scores = self._model.feature_importances_
+        names = getattr(self._model, "feature_names_in_", None)
+        if names is None:
+            names = [f"feature_{i}" for i in range(len(scores))]
+        return pd.Series(scores, index=names).sort_values(ascending=False)
