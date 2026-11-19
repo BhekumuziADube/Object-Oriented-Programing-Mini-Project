@@ -61,3 +61,17 @@ class LogisticRegressionModel(BaseModel):
 
     def build_estimator(self):
         return LogisticRegression(C=self._C, max_iter=1000)
+
+
+class BaselineModel(BaseModel):
+    """Majority-class baseline: always guesses the most common outcome (card X1).
+
+    Any real model has to beat this. Its probabilities are the class shares in
+    the training data, the same for every patient, so its ROC-AUC is 0.5.
+    """
+
+    def __init__(self) -> None:
+        super().__init__("Majority-class Baseline")
+
+    def build_estimator(self):
+        return DummyClassifier(strategy="prior")
