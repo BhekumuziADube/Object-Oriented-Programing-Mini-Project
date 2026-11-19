@@ -19,10 +19,18 @@ from sklearn.metrics import (
 class Evaluator:
     """Evaluate Outcome labels 0 and 1, treating 1 as positive."""
 
+
+
     @staticmethod
     def _positive_scores(model, X):
-        """Select probabilities for class 1 using the model's class order."""
+        """Accept class-1 scores or select class 1 from probability columns."""
         probabilities = np.asarray(model.predict_proba(X))
+
+        # Project BaseModel returns one class-1 probability per row.
+        if probabilities.ndim == 1:
+            return probabilities
+
+        # Scikit-learn classifiers return one column per class.
         classes = np.asarray(getattr(model, "classes_", [0, 1]))
         positive = np.flatnonzero(classes == 1)
 
@@ -32,6 +40,7 @@ class Evaluator:
             raise ValueError("The fitted model must expose positive class 1.")
 
         return probabilities[:, positive[0]]
+
 
     def evaluate(self, y_true, y_pred, y_score):
         """Return metrics and a confusion matrix ordered by labels [0, 1]."""
