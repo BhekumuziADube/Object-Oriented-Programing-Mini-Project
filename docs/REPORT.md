@@ -106,6 +106,44 @@ Every cleaning action is recorded by the CleaningLog class in `docs/cleaning_log
 
 `[[CHECK: compare this table with docs/cleaning_log.csv and correct any row that differs. If the log has more steps, add them here.]]`
 
+### 6. Clean datasets and exploratory analysis
+
+#### 6.1 Clean datasets
+
+Two clean copies of the data are produced for description and inspection, one with median imputation and one with KNN imputation:
+
+- `data/processed/diabetes_median_clean.csv`
+- `data/processed/diabetes_knn_clean.csv`
+
+Each has 768 rows and no missing values. They are made by scaling, imputing and then converting the values back to their original units. Each file has an added PatientID column and flag columns that mark which values were filled in. The models do not read these files. They repeat the imputation inside the pipeline using training data only, so no information leaks from the test set. `[[CHECK: confirm CL2 is merged and these file names and columns are correct]]`
+
+#### 6.2 Exploratory analysis
+
+- **Outcome balance:** 500 patients without diabetes and 268 with it, so 34.9% are positive. Accuracy alone would be misleading, so recall and ROC-AUC are the main metrics.
+- **Age:** patients are aged 21 to 81, with a median of 29.
+- **Group differences (medians):** Glucose is 140 in patients with diabetes and 107 in those without. BMI is 34.3 and 30.1. Age is 36 and 27.
+
+Correlation of each feature with Outcome (hidden zeros treated as missing):
+
+| Feature | Correlation with Outcome |
+| --- | --- |
+| Glucose | 0.49 |
+| BMI | 0.31 |
+| Insulin | 0.30 |
+| SkinThickness | 0.26 |
+| Age | 0.24 |
+| Pregnancies | 0.22 |
+| BloodPressure | 0.17 |
+| DiabetesPedigreeFunction | 0.17 |
+
+Glucose has the strongest link with the outcome. The two strongest links between features are BMI with SkinThickness (0.65) and Glucose with Insulin (0.58). Correlation does not show cause.
+
+`[[CHECK: insert the figures from docs/figures/ (An1 and An2): class balance, distributions and missingness, the correlation heatmap, and the before and after imputation comparison. Add one sentence under each.]]`
+
+#### 6.3 What this means for the models
+
+The hidden zeros are concentrated in Insulin and SkinThickness, which is where the imputation choice should matter most. Glucose is the strongest predictor. Because only about a third of patients are positive, the models are judged on recall and ROC-AUC as well as accuracy.
+
 ## 7. Software design, OOP
 <!-- Co2: Include the class diagram and explain how the classes work
 together, using examples from the project. -->
