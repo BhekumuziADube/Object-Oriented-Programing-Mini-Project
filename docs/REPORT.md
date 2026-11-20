@@ -85,8 +85,6 @@ descriptive differences do not establish causation.
 
 Regenerate the figures from the repository root with `python -m src.eda`.
 ## 4–6. Data quality, cleaning, clean datasets, EDA
-<!-- REP2: Summarise the quality checks, explain how missing measurements
-were handled, describe the exported datasets, and interpret the EDA figures. -->
 
 ### 4. Data quality assessment
 
@@ -428,16 +426,25 @@ These limitations are documented separately from the intended design.
 They should be resolved and retested before claiming that every
 configuration in the complete workflow has been verified.
 
-## 8. Machine-learning method
-<!-- REP3: Describe the baseline, models, preprocessing order, tuning,
-and evaluation. Explain which steps are fitted on training data. -->
+## 8. Machine-learning method  *(owner: A)*
+1. **Task:** binary classification of `Outcome` (diabetes: yes or no) from 8 clinical measurements.
+2. **Split:** a stratified 80/20 split, giving 614 training patients and 154 test patients, with `random_state=42`. The test patients were not used for any tuning or choice.
+3. **Pipeline:** `ZeroToNaN` (impossible zeros become missing), `StandardScaler`, imputer (median or KNN with 5 neighbours), then the model. All steps sit in one scikit-learn Pipeline and are fitted on the training rows only, so no information from validation or test rows reaches the imputer or scaler. Scaling comes before imputation because KNN imputation uses distances.
+4. **Baseline:** a majority-class baseline (always predicts no diabetes; ROC-AUC 0.5). A zeros-kept control was planned but was not part of the final run.
+5. **Imputer comparison:** repeated stratified 5-fold cross-validation (3 repeats), the same folds for every pipeline, default hyperparameters.
+6. **Tuning:** grid search with 5-fold stratified cross-validation on the training set only, scored by ROC-AUC. The grids were:
+   - Logistic regression: `C` in 0.01, 0.1, 1, 10, 100.
+   - Random forest: `n_estimators` in 100, 200; `max_depth` in none, 5, 10; `min_samples_leaf` in 1, 3, 5.
+   - KNN: `n_neighbors` in 3, 5, 7, 9, 11, 15, 21; `weights` uniform or distance; `p` 1 or 2.
+7. **Final model:** the model and imputer with the best cross-validation ROC-AUC (not the best test score), evaluated once on the test set. Every combination was also scored once on the test set and saved to `results/final_test.csv`.
+8. **Interpretation:** random forest feature importances (`RandomForestModel.feature_importances`) and the correlation analysis in `docs/figures/eda_notes.md`.
 
 ## 9–10. Results, discussion, limitations
 <!-- Co1: Present the model and imputation comparisons, interpret the
 main differences, and explain the limits of what the results show. -->
 
-## 11. Conclusion
-<!-- REP3: Summarise the main finding in relation to the project objectives. -->
+## 11. Conclusion  
+The team built a reusable object-oriented pipeline in Python (data loader, quality checker, cleaning log, interchangeable imputers, preprocessor, models, tuner, evaluator and experiment runner) and used it to ask whether median or KNN imputation of the hidden zeros changes prediction quality in the Pima diabetes data. The best combination by cross-validation was logistic regression with median imputation (cross-validated ROC-AUC 0.8445), which scored a ROC-AUC of 0.810 and a recall of 0.48 on the 154 test patients, against 0.50 for the majority-class baseline. The imputation method made no practical difference: for each of the three models, median and KNN imputation differed by at most 0.0024 in cross-validated ROC-AUC, and the winning combination beat its closest rival by only 0.0001, so the evidence does not show that either method is better. The main limitations are that the data are small, come from one population and were collected in the 1980s, so differences of one or two points on 154 patients are not reliable, and that at the default threshold every model found only 48% to 56% of the patients with diabetes, which is too low for screening, so the models are not for clinical use. Working with Kanban, one branch per card, pull requests and peer review gave each member visible, equal work (12 cards each), and taught the team that fixing the order of the pipeline steps early, and keeping every imputer and model behind one interface, made the comparison fair and the work easy to split.
 
 ## 12. Contributions table
 <!-- REP3: Record each member's contributions and link to the relevant
