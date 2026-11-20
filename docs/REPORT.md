@@ -428,9 +428,18 @@ These limitations are documented separately from the intended design.
 They should be resolved and retested before claiming that every
 configuration in the complete workflow has been verified.
 
-## 8. Machine-learning method
-<!-- REP3: Describe the baseline, models, preprocessing order, tuning,
-and evaluation. Explain which steps are fitted on training data. -->
+## 8. Machine-learning method  *(owner: A)*
+1. **Task:** binary classification of `Outcome` (diabetes: yes or no) from 8 clinical measurements.
+2. **Split:** a stratified 80/20 split, giving 614 training patients and 154 test patients, with `random_state=42`. The test patients were not used for any tuning or choice.
+3. **Pipeline:** `ZeroToNaN` (impossible zeros become missing), `StandardScaler`, an imputer (median, KNN with 5 neighbours, or zeros kept), then the model. All steps sit in one scikit-learn Pipeline and are fitted on the training rows only, so no information from validation or test rows reaches the imputer or scaler. Scaling comes before imputation because KNN imputation uses distances.
+4. **Baseline and controls:** a majority-class baseline (always predicts no diabetes; ROC-AUC 0.5), and a "zeros kept" control that does not treat the zeros as missing.
+5. **Imputer comparison:** repeated stratified 5-fold cross-validation (3 repeats), the same folds for every pipeline, default hyperparameters.
+6. **Tuning:** grid search with 5-fold stratified cross-validation on the training set only, scored by ROC-AUC. The grids were:
+   - Logistic regression: `C` in 0.01, 0.1, 1, 10, 100.
+   - Random forest: `n_estimators` in 100, 200; `max_depth` in none, 5, 10; `min_samples_leaf` in 1, 3, 5.
+   - KNN: `n_neighbors` in 3, 5, 7, 9, 11, 15, 21; `weights` uniform or distance; `p` 1 or 2.
+7. **Final model:** the model and imputer with the best cross-validation ROC-AUC (not the best test score), evaluated once on the test set. Every combination was also scored once on the test set and saved to `results/final_test.csv`.
+8. **Interpretation:** random forest feature importances (`RandomForestModel.feature_importances`) and the correlation analysis in `docs/figures/eda_notes.md`.
 
 ## 9–10. Results, discussion, limitations
 <!-- Co1: Present the model and imputation comparisons, interpret the
