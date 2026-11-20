@@ -44,9 +44,46 @@ that any trade-offs in detecting positive cases are visible.
 requests. Link to examples of reviews, pairing, and conflict resolution. -->
 
 ## 3. Dataset
-<!-- An1: Describe the data source, number of records, predictor variables,
-and meaning of Outcome. Summarise the raw data and link to the EDA findings. -->
+The Pima Indians Diabetes dataset (`data/diabetes.csv`) contains 768
+records, eight predictors and one binary outcome. `Outcome = 0` denotes
+a recorded negative outcome; `Outcome = 1` denotes a recorded positive
+outcome. The [data dictionary](data_dictionary.md) describes the variables,
+units and missing-value conventions.
 
+### Exploratory analysis of the raw data
+
+The raw CSV was loaded through the project's DataLoader. Zero placeholders
+in Glucose, BloodPressure, SkinThickness, Insulin and BMI were treated as
+missing measurements. Zero pregnancies remained valid. Zero placeholders
+were excluded from the glucose and BMI comparisons.
+
+1. **Uneven outcome groups:** 500 records (65.1%) had Outcome 0 and
+   268 (34.9%) had Outcome 1.
+2. **Missingness concentrated in two measurements:** Insulin had 374
+   missing measurements (48.7%) and SkinThickness had 227 (29.6%).
+   BloodPressure had 35, BMI had 11 and Glucose had 5.
+3. **Higher median glucose in the positive group:** 140 for Outcome 1
+   versus 107 for Outcome 0.
+4. **Higher median BMI in the positive group:** 34.3 for Outcome 1
+   versus 30.1 for Outcome 0.
+5. **Higher median age in the positive group:** 36 years for Outcome 1
+   versus 27 years for Outcome 0.
+
+![Record counts by diabetes outcome](figures/outcome_counts.png)
+
+The negative outcome group contains almost twice as many records as
+the positive group.
+
+![Missing measurements](figures/missing_measurements.png)
+
+Insulin and SkinThickness account for most missing measurements.
+
+![Measurements by outcome](figures/measurements_by_outcome.png)
+
+Glucose, BMI and age differ between outcome groups, although these
+descriptive differences do not establish causation.
+
+Regenerate the figures from the repository root with `python -m src.eda`.
 ## 4–6. Data quality, cleaning, clean datasets, EDA
 <!-- REP2: Summarise the quality checks, explain how missing measurements
 were handled, describe the exported datasets, and interpret the EDA figures. -->
