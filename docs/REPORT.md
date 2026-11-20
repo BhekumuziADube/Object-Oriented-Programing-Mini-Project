@@ -426,7 +426,7 @@ These limitations are documented separately from the intended design.
 They should be resolved and retested before claiming that every
 configuration in the complete workflow has been verified.
 
-## 8. Machine-learning method  *(owner: A)*
+## 8. Machine-learning method
 1. **Task:** binary classification of `Outcome` (diabetes: yes or no) from 8 clinical measurements.
 2. **Split:** a stratified 80/20 split, giving 614 training patients and 154 test patients, with `random_state=42`. The test patients were not used for any tuning or choice.
 3. **Pipeline:** `ZeroToNaN` (impossible zeros become missing), `StandardScaler`, imputer (median or KNN with 5 neighbours), then the model. All steps sit in one scikit-learn Pipeline and are fitted on the training rows only, so no information from validation or test rows reaches the imputer or scaler. Scaling comes before imputation because KNN imputation uses distances.
