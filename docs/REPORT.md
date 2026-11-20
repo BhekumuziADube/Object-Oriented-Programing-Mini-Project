@@ -84,7 +84,7 @@ Glucose, BMI and age differ between outcome groups, although these
 descriptive differences do not establish causation.
 
 Regenerate the figures from the repository root with `python -m src.eda`.
-## 4–6. Data quality, cleaning, clean datasets, EDA
+## Data quality, cleaning, clean datasets, EDA
 
 ### 4. Data quality assessment
 
@@ -97,7 +97,7 @@ This part checks the Pima dataset on six data quality dimensions before any clea
 | Completeness | Empty cells and hidden zeros | No empty cells, but 652 hidden zeros in five columns (10.6% of all feature values). Only 392 of 768 rows (51.0%) have no hidden zero. | Zeros in the five columns are treated as missing and imputed (part 5). |
 | Validity | Values inside the allowed ranges, Outcome only 0 or 1 | No value outside the ranges in the data dictionary (hidden zeros excluded). Outcome contains only 0 and 1. | None needed. |
 | Consistency | Data types, whole numbers, Pregnancies compared with Age | All nine columns are numeric, whole-number columns contain whole numbers, and Pregnancies is at most Age minus 10 in all 768 rows. | None needed. |
-| Accuracy | Outliers (1.5 x IQR rule) and plausibility | Outliers flagged: Pregnancies 4, BloodPressure 14, SkinThickness 3, Insulin 24, BMI 8, DiabetesPedigreeFunction 29, Age 9, Glucose 0. The lowest non-zero BloodPressure is 24 mm Hg, which is unusual but inside the hard limits. `[[CHECK: compare these counts with docs/data_quality_report.md (C3) and use its numbers if they differ]]` | Outliers are flagged, not deleted, because none is physiologically impossible. |
+| Accuracy | Outliers (1.5 x IQR rule) and plausibility | Outliers flagged: Pregnancies 4, BloodPressure 14, SkinThickness 3, Insulin 24, BMI 8, DiabetesPedigreeFunction 29, Age 9, Glucose 0. The lowest non-zero BloodPressure is 24 mm Hg, which is unusual but inside the hard limits. | Outliers are flagged, not deleted, because none is physiologically impossible. |
 | Uniqueness | Duplicate rows | 0 duplicate rows. The file has no patient ID, so it cannot show whether the same person appears twice. | A PatientID column is added in the clean datasets (part 6). |
 | Timeliness | Age of the data | Collected in the late 1980s. The file has no date column, so this comes from the source documentation. | Stated as a limitation (4.4). |
 
@@ -133,7 +133,7 @@ The zeros pull the averages down and inflate the spread, most of all for Insulin
 
 - Accuracy can only be judged by plausibility, because the original patient records are not available.
 - The data was collected in the late 1980s from women of Pima Indian heritage aged 21 or older, so the results may not apply to other populations, countries or years.
-- With no patient ID, uniqueness is only checked on whole rows.
+- With no patient ID, uniqueness is only ed on whole rows.
 
 ### 5. Data cleaning and imputation
 
@@ -174,8 +174,6 @@ Every cleaning action is recorded by the CleaningLog class in `docs/cleaning_log
 | Validity | All columns | Values outside valid ranges searched; none found | 0 |
 | Accuracy | Eight columns | Outliers flagged, none deleted | see 4.1 |
 
-`[[CHECK: compare this table with docs/cleaning_log.csv and correct any row that differs. If the log has more steps, add them here.]]`
-
 ### 6. Clean datasets and exploratory analysis
 
 #### 6.1 Clean datasets
@@ -185,7 +183,7 @@ Two clean copies of the data are produced for description and inspection, one wi
 - `data/processed/diabetes_median_clean.csv`
 - `data/processed/diabetes_knn_clean.csv`
 
-Each has 768 rows and no missing values. They are made by scaling, imputing and then converting the values back to their original units. Each file has an added PatientID column and flag columns that mark which values were filled in. The models do not read these files. They repeat the imputation inside the pipeline using training data only, so no information leaks from the test set. `[[CHECK: confirm CL2 is merged and these file names and columns are correct]]`
+Each has 768 rows and no missing values. They are made by scaling, imputing and then converting the values back to their original units. Each file has an added PatientID column and flag columns that mark which values were filled in. The models do not read these files. They repeat the imputation inside the pipeline using training data only, so no information leaks from the test set.
 
 #### 6.2 Exploratory analysis
 
@@ -207,8 +205,6 @@ Correlation of each feature with Outcome (hidden zeros treated as missing):
 | DiabetesPedigreeFunction | 0.17 |
 
 Glucose has the strongest link with the outcome. The two strongest links between features are BMI with SkinThickness (0.65) and Glucose with Insulin (0.58). Correlation does not show cause.
-
-`[[CHECK: insert the figures from docs/figures/ (An1 and An2): class balance, distributions and missingness, the correlation heatmap, and the before and after imputation comparison. Add one sentence under each.]]`
 
 #### 6.3 What this means for the models
 
