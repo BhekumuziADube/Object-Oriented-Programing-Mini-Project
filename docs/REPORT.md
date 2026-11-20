@@ -435,9 +435,56 @@ configuration in the complete workflow has been verified.
 7. **Final model:** the model and imputer with the best cross-validation ROC-AUC (not the best test score), evaluated once on the test set. Every combination was also scored once on the test set and saved to `results/final_test.csv`.
 8. **Interpretation:** random forest feature importances (`RandomForestModel.feature_importances`) and the correlation analysis in `docs/figures/eda_notes.md`.
 
-## 9–10. Results, discussion, limitations
+## Results, discussion, limitations
 <!-- Co1: Present the model and imputation comparisons, interpret the
 main differences, and explain the limits of what the results show. -->
+
+### 9. Results
+
+#### 9.1 Imputer comparison by cross-validation
+
+Every combination of imputer and model was compared with repeated stratified 5-fold cross-validation (3 repeats, 15 folds in total) on the 614 training patients. All pipelines used the same folds and default model settings, and every step was fitted on the training part of each fold only. The test set was not used. Each cell shows the mean over the 15 folds, with the standard deviation (SD) in brackets.
+
+| Model | Imputer | Accuracy | Recall | ROC-AUC |
+| --- | --- | --- | --- | --- |
+| Logistic regression | Median | 0.783 (0.035) | 0.575 (0.081) | 0.843 (0.027) |
+| Logistic regression | KNN | 0.784 (0.031) | 0.580 (0.070) | 0.843 (0.025) |
+| Logistic regression | Zeros kept | 0.782 (0.037) | 0.578 (0.064) | 0.831 (0.041) |
+| Random forest | Median | 0.755 (0.035) | 0.584 (0.063) | 0.818 (0.039) |
+| Random forest | KNN | 0.750 (0.043) | 0.580 (0.066) | 0.824 (0.034) |
+| Random forest | Zeros kept | 0.758 (0.038) | 0.563 (0.079) | 0.816 (0.043) |
+| KNN | Median | 0.759 (0.048) | 0.609 (0.053) | 0.807 (0.049) |
+| KNN | KNN | 0.760 (0.041) | 0.617 (0.054) | 0.815 (0.042) |
+| KNN | Zeros kept | 0.745 (0.032) | 0.552 (0.072) | 0.786 (0.045) |
+| Majority-class baseline | Any | 0.651 (0.002) | 0.000 (0.000) | 0.500 (0.000) |
+
+The baseline does not use the features, so its result is the same for every imputer.
+
+Difference in mean ROC-AUC between KNN imputation and median imputation: logistic regression +0.001, random forest +0.006, KNN model +0.008. The SDs are 0.025 to 0.049, so every difference is much smaller than the SD. Following the rule set in the project plan, this is reported as no clear difference. The differences in recall (+0.005, -0.005 and +0.008) are also far inside the SD.
+
+Difference in mean ROC-AUC between zeros kept and median imputation: logistic regression -0.012, random forest -0.002, KNN model -0.022. For recall the differences are +0.003, -0.022 and -0.057. Keeping the zeros gave a lower ROC-AUC for all three models, but every difference is smaller than the SD.
+
+![Mean ROC-AUC and recall by model and imputer](figures/cv_roc_auc.png)
+
+*Figure 1. Mean ROC-AUC and recall of each model and imputer in repeated cross-validation. The bars show one standard deviation. The baseline (ROC-AUC 0.50, recall 0.00) is below the scale.*
+
+#### 9.2 Final test results
+
+The best settings for each model and imputer were chosen by 5-fold cross-validation on the training data, scored by ROC-AUC, and never by test results. Each tuned model was then evaluated once on the 154 test patients (54 with diabetes and 100 without). The zeros-kept control was compared in cross-validation only (Section 9.1). The model marked with an asterisk had the best cross-validation score (0.8445) of all combinations.
+
+| Model | Imputer | Best settings | Accuracy | Precision | Recall | F1 | ROC-AUC |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Logistic regression * | Median | C = 0.1 | 0.688 | 0.565 | 0.481 | 0.520 | 0.810 |
+| Logistic regression | KNN | C = 0.1 | 0.701 | 0.587 | 0.500 | 0.540 | 0.812 |
+| Random forest | Median | 200 trees, depth 5, leaf size 5 | 0.747 | 0.674 | 0.537 | 0.598 | 0.806 |
+| Random forest | KNN | 200 trees, depth 5, leaf size 3 | 0.714 | 0.614 | 0.500 | 0.551 | 0.805 |
+| KNN | Median | 21 neighbours, distance weights, p = 2 | 0.753 | 0.682 | 0.556 | 0.612 | 0.812 |
+| KNN | KNN | 21 neighbours, distance weights, p = 2 | 0.747 | 0.667 | 0.556 | 0.606 | 0.803 |
+| Majority-class baseline | Any | none | 0.649 | 0.000 | 0.000 | 0.000 | 0.500 |
+
+The baseline predicts "no diabetes" for everyone. It is right for 100 of 154 patients (64.9%) and finds none of the 54 patients with diabetes, so any useful model has to beat 64.9% accuracy and 0.5 ROC-AUC.
+
+All results were produced with fixed random seeds (42 for the split, the cross-validation and the random forest). The settings and a checksum of `data/diabetes.csv` are saved with the results files, so the run can be repeated.
 
 ## 11. Conclusion  
 The team built a reusable object-oriented pipeline in Python (data loader, quality checker, cleaning log, interchangeable imputers, preprocessor, models, tuner, evaluator and experiment runner) and used it to ask whether median or KNN imputation of the hidden zeros changes prediction quality in the Pima diabetes data. The best combination by cross-validation was logistic regression with median imputation (cross-validated ROC-AUC 0.8445), which scored a ROC-AUC of 0.810 and a recall of 0.48 on the 154 test patients, against 0.50 for the majority-class baseline. The imputation method made no practical difference: for each of the three models, median and KNN imputation differed by at most 0.0024 in cross-validated ROC-AUC, and the winning combination beat its closest rival by only 0.0001, so the evidence does not show that either method is better. The main limitations are that the data are small, come from one population and were collected in the 1980s, so differences of one or two points on 154 patients are not reliable, and that at the default threshold every model found only 48% to 56% of the patients with diabetes, which is too low for screening, so the models are not for clinical use. Working with Kanban, one branch per card, pull requests and peer review gave each member visible, equal work (12 cards each), and taught the team that fixing the order of the pipeline steps early, and keeping every imputer and model behind one interface, made the comparison fair and the work easy to split.
