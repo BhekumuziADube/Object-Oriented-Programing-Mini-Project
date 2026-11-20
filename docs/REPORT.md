@@ -448,8 +448,8 @@ Each member completed 12 cards worth 22 points. All counts come from GitHub.
 
 | Member | Cards | PRs merged | Reviews given | Commits |
 |---|---|---|---|---|
-| Shepard | D1, I1, C1, CL1, C6, Q1, M1, An2, T3, E2, REP3, Co3 | _ | _ | 39 |
-| Bhekumuzi | D2, I2, Q4, C2, C4, W1, M2, Q2, X1, T1, REP2, Co1 | _ | _ | 37 |
-| Nicole | D3, IF1, C3, An1, C5, E1, M3, CL2, T2, Q3, X2, Co2 | _ | _ | 28 |
+| Shepard | D1, I1, C1, CL1, C6, Q1, M1, An2, T3, E2, REP3, Co3 | 12 | 2 | 39 |
+| Bhekumuzi | D2, I2, Q4, C2, C4, W1, M2, Q2, X1, T1, REP2, Co1 | 13 | 6 | 37 |
+| Nicole | D3, IF1, C3, An1, C5, E1, M3, CL2, T2, Q3, X2, Co2 | 13 | 8 | 28 |
 
 Commit counts are from `git shortlog -sn --no-merges origin/develop`, taken on 20 November 2026.
