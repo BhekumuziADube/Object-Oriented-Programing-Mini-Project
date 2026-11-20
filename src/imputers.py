@@ -71,10 +71,28 @@ class KNNImputerStrategy(Imputer):
         if isinstance(X, pd.DataFrame):
             return pd.DataFrame(filled, index=X.index, columns=X.columns)
         return filled
-# Registry of the available imputers: name -> class.
-# Each imputer card adds one line inside the brace
 
+
+class ZerosKeptImputer(Imputer):
+    """Control strategy: preserve zeros and reject missing values."""
+
+    keeps_zeros = True
+
+    def fit(self, X, y=None) -> "ZerosKeptImputer":
+        return self
+
+    def transform(self, X):
+        if pd.DataFrame(X).isna().any().any():
+            raise ValueError(
+                "ZerosKeptImputer does not fill missing values. "
+                "Skip the ZeroToNaN step when you use this control."
+            )
+        return X.copy()
+
+
+# Registry of the available imputers: name -> class.
 IMPUTERS: dict[str, type[Imputer]] = {
+    "zeros_kept": ZerosKeptImputer,
     "knn": KNNImputerStrategy,
     "median": MedianImputer,
 }
