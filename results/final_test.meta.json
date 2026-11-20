@@ -1,0 +1,23 @@
+{
+  "data": "data/diabetes.csv",
+  "data_sha256": "698c203a14aa31941d2251175330c9199f3ccdb31597abbba2a3e35416257a72",
+  "seeds": {
+    "split": 42,
+    "cross_validation": 42,
+    "random_forest": 42
+  },
+  "params": {
+    "quick": false,
+    "folds": 5,
+    "models": [
+      "Logistic Regression",
+      "Random Forest",
+      "KNN",
+      "Baseline"
+    ],
+    "imputers": [
+      "knn",
+      "median"
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+model,imputer,is_baseline,best_params,cv_auc,accuracy,precision,recall,f1,roc_auc,chosen_by_cv
+Logistic Regression,knn,False,"{""C"": 0.1}",0.8444,0.7013,0.587,0.5,0.54,0.8122,False
+Logistic Regression,median,False,"{""C"": 0.1}",0.8445,0.6883,0.5652,0.4815,0.52,0.8104,True
+Random Forest,knn,False,"{""max_depth"": 5, ""min_samples_leaf"": 3, ""n_estimators"": 200}",0.84,0.7143,0.6136,0.5,0.551,0.805,False
+Random Forest,median,False,"{""max_depth"": 5, ""min_samples_leaf"": 5, ""n_estimators"": 200}",0.8386,0.7468,0.6744,0.537,0.5979,0.8061,False
+KNN,knn,False,"{""n_neighbors"": 21, ""p"": 2, ""weights"": ""distance""}",0.8336,0.7468,0.6667,0.5556,0.6061,0.8031,False
+KNN,median,False,"{""n_neighbors"": 21, ""p"": 2, ""weights"": ""distance""}",0.836,0.7532,0.6818,0.5556,0.6122,0.8124,False
+Baseline,knn,True,{},0.5,0.6494,0.0,0.0,0.0,0.5,False
+Baseline,median,True,{},0.5,0.6494,0.0,0.0,0.0,0.5,False

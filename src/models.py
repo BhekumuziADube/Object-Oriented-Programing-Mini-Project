@@ -19,6 +19,7 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.dummy import DummyClassifier
 
 
 class BaseModel(ABC):
@@ -63,6 +64,7 @@ class LogisticRegressionModel(BaseModel):
     def build_estimator(self):
         return LogisticRegression(C=self._C, max_iter=1000)
 
+
 class KNNModel(BaseModel):
     """K-nearest neighbours classifier for card M3."""
 
@@ -83,8 +85,9 @@ class KNNModel(BaseModel):
             weights=self._weights,
             p=self._p,
         )
-      
- class RandomForestModel(BaseModel):
+
+
+class RandomForestModel(BaseModel):
     """Random forest: many decision trees that vote together (card M2)."""
 
     def __init__(
@@ -116,3 +119,21 @@ class KNNModel(BaseModel):
         if names is None:
             names = [f"feature_{i}" for i in range(len(scores))]
         return pd.Series(scores, index=names).sort_values(ascending=False)
+
+
+class BaselineModel(BaseModel):
+    """Always predict the most frequent training outcome."""
+
+    def __init__(self) -> None:
+        super().__init__("Baseline")
+
+    def build_estimator(self):
+        return DummyClassifier(strategy="most_frequent")
+
+
+MODELS = {
+    "Logistic Regression": LogisticRegressionModel,
+    "Random Forest": RandomForestModel,
+    "KNN": KNNModel,
+    "Baseline": BaselineModel,
+}
