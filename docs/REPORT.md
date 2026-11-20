@@ -435,9 +435,88 @@ configuration in the complete workflow has been verified.
 7. **Final model:** the model and imputer with the best cross-validation ROC-AUC (not the best test score), evaluated once on the test set. Every combination was also scored once on the test set and saved to `results/final_test.csv`.
 8. **Interpretation:** random forest feature importances (`RandomForestModel.feature_importances`) and the correlation analysis in `docs/figures/eda_notes.md`.
 
-## 9–10. Results, discussion, limitations
+## Results, discussion, limitations
 <!-- Co1: Present the model and imputation comparisons, interpret the
 main differences, and explain the limits of what the results show. -->
+
+### 9. Results
+
+#### 9.1 Imputer comparison by cross-validation
+
+Every combination of imputer and model was compared with repeated stratified 5-fold cross-validation (3 repeats, 15 folds in total) on the 614 training patients. All pipelines used the same folds and default model settings, and every step was fitted on the training part of each fold only. The test set was not used. Each cell shows the mean over the 15 folds, with the standard deviation (SD) in brackets.
+
+| Model | Imputer | Accuracy | Recall | ROC-AUC |
+| --- | --- | --- | --- | --- |
+| Logistic regression | Median | 0.783 (0.035) | 0.575 (0.081) | 0.843 (0.027) |
+| Logistic regression | KNN | 0.784 (0.031) | 0.580 (0.070) | 0.843 (0.025) |
+| Logistic regression | Zeros kept | 0.782 (0.037) | 0.578 (0.064) | 0.831 (0.041) |
+| Random forest | Median | 0.755 (0.035) | 0.584 (0.063) | 0.818 (0.039) |
+| Random forest | KNN | 0.750 (0.043) | 0.580 (0.066) | 0.824 (0.034) |
+| Random forest | Zeros kept | 0.758 (0.038) | 0.563 (0.079) | 0.816 (0.043) |
+| KNN | Median | 0.759 (0.048) | 0.609 (0.053) | 0.807 (0.049) |
+| KNN | KNN | 0.760 (0.041) | 0.617 (0.054) | 0.815 (0.042) |
+| KNN | Zeros kept | 0.745 (0.032) | 0.552 (0.072) | 0.786 (0.045) |
+| Majority-class baseline | Any | 0.651 (0.002) | 0.000 (0.000) | 0.500 (0.000) |
+
+The baseline does not use the features, so its result is the same for every imputer.
+
+Difference in mean ROC-AUC between KNN imputation and median imputation: logistic regression +0.001, random forest +0.006, KNN model +0.008. The SDs are 0.025 to 0.049, so every difference is much smaller than the SD. Following the rule set in the project plan, this is reported as no clear difference. The differences in recall (+0.005, -0.005 and +0.008) are also far inside the SD.
+
+Difference in mean ROC-AUC between zeros kept and median imputation: logistic regression -0.012, random forest -0.002, KNN model -0.022. For recall the differences are +0.003, -0.022 and -0.057. Keeping the zeros gave a lower ROC-AUC for all three models, but every difference is smaller than the SD.
+
+![Mean ROC-AUC and recall by model and imputer](figures/cv_roc_auc.png)
+
+*Figure 1. Mean ROC-AUC and recall of each model and imputer in repeated cross-validation. The bars show one standard deviation. The baseline (ROC-AUC 0.50, recall 0.00) is below the scale.*
+
+#### 9.2 Final test results
+
+The best settings for each model and imputer were chosen by 5-fold cross-validation on the training data, scored by ROC-AUC, and never by test results. Each tuned model was then evaluated once on the 154 test patients (54 with diabetes and 100 without). The zeros-kept control was compared in cross-validation only (Section 9.1). The model marked with an asterisk had the best cross-validation score (0.8445) of all combinations.
+
+| Model | Imputer | Best settings | Accuracy | Precision | Recall | F1 | ROC-AUC |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Logistic regression * | Median | C = 0.1 | 0.688 | 0.565 | 0.481 | 0.520 | 0.810 |
+| Logistic regression | KNN | C = 0.1 | 0.701 | 0.587 | 0.500 | 0.540 | 0.812 |
+| Random forest | Median | 200 trees, depth 5, leaf size 5 | 0.747 | 0.674 | 0.537 | 0.598 | 0.806 |
+| Random forest | KNN | 200 trees, depth 5, leaf size 3 | 0.714 | 0.614 | 0.500 | 0.551 | 0.805 |
+| KNN | Median | 21 neighbours, distance weights, p = 2 | 0.753 | 0.682 | 0.556 | 0.612 | 0.812 |
+| KNN | KNN | 21 neighbours, distance weights, p = 2 | 0.747 | 0.667 | 0.556 | 0.606 | 0.803 |
+| Majority-class baseline | Any | none | 0.649 | 0.000 | 0.000 | 0.000 | 0.500 |
+
+The baseline predicts "no diabetes" for everyone. It is right for 100 of 154 patients (64.9%) and finds none of the 54 patients with diabetes, so any useful model has to beat 64.9% accuracy and 0.5 ROC-AUC.
+
+All results were produced with fixed random seeds (42 for the split, the cross-validation and the random forest). The settings and a checksum of `data/diabetes.csv` are saved with the results files, so the run can be repeated.
+
+### 10. Discussion
+
+#### 10.1 Does the way the hidden zeros are handled matter?
+
+Repairing the zeros with the median or with KNN made no clear difference. In cross-validation the mean ROC-AUC differed by at most 0.008 between the two methods, which is far less than the spread between folds (SD 0.025 to 0.049). On the test set there was no consistent pattern either: KNN imputation was slightly better for logistic regression (accuracy 0.701 against 0.688) but worse for the random forest (0.714 against 0.747) and for the KNN model (0.747 against 0.753). The simple median is therefore as good as the more complex KNN imputation here.
+
+Leaving the zeros in place was the weakest option. It lowered the mean ROC-AUC for all three models, most of all for the KNN model (0.786 against 0.807), whose recall fell from 0.609 to 0.552. This fits the fact that KNN works from distances between patients, so false zeros in Insulin (48.7% of rows) and SkinThickness (29.6%) distort which patients look similar. Every gap is smaller than the SD, however, so the result is suggestive, not proven.
+
+#### 10.2 Which model performed best?
+
+In cross-validation logistic regression scored highest on ROC-AUC (0.843) and accuracy (0.784) and had the smallest SD in ROC-AUC (0.025 to 0.027). Random forest (0.818 to 0.824) and KNN (0.807 to 0.815) were 0.02 to 0.04 lower, about one SD, so logistic regression is the best-supported model but not by a wide margin. The KNN model had the highest recall (0.609 to 0.617). All three models were far above the baseline (ROC-AUC 0.50, accuracy 0.651).
+
+The test set did not point to a different clear winner. All six tuned combinations lie within 0.009 ROC-AUC of each other (0.803 to 0.812). Logistic regression with median imputation, the combination chosen by cross-validation, had the lowest test accuracy (0.688), while the KNN model with median imputation had the highest (0.753) and the best F1 (0.612). The gap of 0.065 in accuracy is 10 of 154 patients. Cross-validation uses 614 patients and 15 folds, while the test set is one split of 154 patients, so the cross-validation result is the more reliable guide. The test result is reported as the final check and was not used to change any choice.
+
+All models scored lower on the test set than in cross-validation (ROC-AUC 0.80 to 0.81 against 0.83 to 0.84 in tuning). A small drop is expected, because the settings were chosen on the training data and one test split varies by chance.
+
+#### 10.3 Recall against accuracy
+
+About one patient in three has diabetes (34.9%), so accuracy alone is misleading: the baseline reaches 64.9% without finding a single patient with diabetes. In screening, missing a patient with diabetes costs more than a false alarm, so recall and ROC-AUC matter most. By this measure the models are only moderate. The best recall in cross-validation was 0.617, so about 4 in 10 patients with diabetes were missed. On the test set the best recall was 0.556, which is 30 of 54 patients found and 24 missed.
+
+The model with the best accuracy and ROC-AUC (logistic regression) is not the one with the best recall (KNN), so the choice depends on the goal. A screening tool that favours recall could lower its decision threshold to find more patients, at the price of more false alarms. This was not tested in this project.
+
+#### 10.4 Limitations
+
+- **Small test set:** the test set has 154 patients, so one patient is 0.65 points of accuracy. It has 54 patients with diabetes, so one patient is 1.9 points of recall. Differences of 1 to 2 points are treated as noise, and even the 6.5-point accuracy gap between models (10 patients) should be read with care.
+- **One split:** the final results come from a single train and test split. Cross-validation on the training data gives a steadier estimate and is the main basis for conclusions.
+- **Population and age of the data:** the patients are women of Pima Indian heritage aged 21 or older, and the data was collected in the late 1980s. The results may not apply to other groups, countries or years, and no outside dataset was used to check them.
+- **Imputed values are estimates:** about half of all Insulin values and 30% of SkinThickness values were filled in. The models therefore partly learn from estimated numbers, not measurements.
+- **Limited search:** only three models were tried, with small tuning grids (20 combinations or fewer per model). For logistic regression only the setting C was tuned. A larger search might change the ranking.
+- **Control run in cross-validation only:** the zeros-kept pipeline was compared in cross-validation but not evaluated on the test set.
+- **Not for clinical use:** this is a teaching project. These models must not be used to make decisions about real patients.
 
 ## 11. Conclusion  
 The team built a reusable object-oriented pipeline in Python (data loader, quality checker, cleaning log, interchangeable imputers, preprocessor, models, tuner, evaluator and experiment runner) and used it to ask whether median or KNN imputation of the hidden zeros changes prediction quality in the Pima diabetes data. The best combination by cross-validation was logistic regression with median imputation (cross-validated ROC-AUC 0.8445), which scored a ROC-AUC of 0.810 and a recall of 0.48 on the 154 test patients, against 0.50 for the majority-class baseline. The imputation method made no practical difference: for each of the three models, median and KNN imputation differed by at most 0.0024 in cross-validated ROC-AUC, and the winning combination beat its closest rival by only 0.0001, so the evidence does not show that either method is better. The main limitations are that the data are small, come from one population and were collected in the 1980s, so differences of one or two points on 154 patients are not reliable, and that at the default threshold every model found only 48% to 56% of the patients with diabetes, which is too low for screening, so the models are not for clinical use. Working with Kanban, one branch per card, pull requests and peer review gave each member visible, equal work (12 cards each), and taught the team that fixing the order of the pipeline steps early, and keeping every imputer and model behind one interface, made the comparison fair and the work easy to split.
